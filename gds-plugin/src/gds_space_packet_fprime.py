@@ -21,6 +21,14 @@ from fprime_gds.common.communication.ccsds.chain import ChainedFramerDeframer
 from fprime_gds.common.communication.ccsds.space_packet import SpacePacketFramerDeframer
 from fprime_gds.plugin.definitions import gds_plugin
 
+try:
+    from fprime_gds.common.communication.ccsds.space_packet_splitter import (
+        SpacePacketSplitterFramerDeframer,
+    )
+except ImportError:
+    # fprime-gds < 4.4.0: SpacePacketFramerDeframer splits byte streams itself
+    SpacePacketSplitterFramerDeframer = None
+
 
 @gds_plugin(FramerDeframer)
 class SpacePacketFprimeFramerDeframer(ChainedFramerDeframer):
@@ -29,8 +37,10 @@ class SpacePacketFprimeFramerDeframer(ChainedFramerDeframer):
     @classmethod
     def get_composites(cls) -> List[Type[FramerDeframer]]:
         """Innermost FramerDeframer first."""
+        splitter = [SpacePacketSplitterFramerDeframer] if SpacePacketSplitterFramerDeframer else []
         return [
             SpacePacketFramerDeframer,
+            *splitter,
             FpFramerDeframer,
         ]
 
